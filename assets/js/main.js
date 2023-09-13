@@ -1,47 +1,51 @@
-const pokemonList = document.getElementById('pokemonList')
-const loadMoreButton = document.getElementById('loadMoreButton')
+(function () {
+    const pokemonList = document.querySelector('ol#pokemons-list')
+    let offset = 0
+    let limit = 12
+    const maxPokemons = 648
 
-const maxRecords = 151
-const limit = 10
-let offset = 0;
+    function loadPokemonsItens() {
+        pokeApi.getPokemons(offset, limit).then((pokemons = []) => {
+            pokemonList.innerHTML = pokemons.map(pokemon =>
+                `
+                <li class="pokemon ${pokemon.type}">
+                        <span class="number"> #${(pokemon.num_order).toString().padStart(3, '0')} </span>
+                        <span class="name"> ${pokemon.name} </span>
 
-function convertPokemonToLi(pokemon) {
-    return `
-        <li class="pokemon ${pokemon.type}">
-            <span class="number">#${pokemon.number}</span>
-            <span class="name">${pokemon.name}</span>
-
-            <div class="detail">
-                <ol class="types">
-                    ${pokemon.types.map((type) => `<li class="type ${type}">${type}</li>`).join('')}
-                </ol>
-
-                <img src="${pokemon.photo}"
-                     alt="${pokemon.name}">
-            </div>
-        </li>
-    `
-}
-
-function loadPokemonItens(offset, limit) {
-    pokeApi.getPokemons(offset, limit).then((pokemons = []) => {
-        const newHtml = pokemons.map(convertPokemonToLi).join('')
-        pokemonList.innerHTML += newHtml
-    })
-}
-
-loadPokemonItens(offset, limit)
-
-loadMoreButton.addEventListener('click', () => {
-    offset += limit
-    const qtdRecordsWithNexPage = offset + limit
-
-    if (qtdRecordsWithNexPage >= maxRecords) {
-        const newLimit = maxRecords - offset
-        loadPokemonItens(offset, newLimit)
-
-        loadMoreButton.parentElement.removeChild(loadMoreButton)
-    } else {
-        loadPokemonItens(offset, limit)
+                        <div class="detail">
+                            <ol class="types">
+                                ${pokemon.types.map((type) => `<li class="type ${type}"> ${type} </li>`).join('')}
+                            </ol>
+                            <img src="${pokemon.photo}"
+                                alt="${pokemon.name}">
+                        </div>
+                    </li>
+                `).join('')
+        }).catch((erro) => console.log(erro))
     }
-})
+
+    function loadAndPageUo() {
+        window.scrollTo({ top: 0, behavior: "smooth" })
+        loadPokemonsItens()
+    }
+
+    document.querySelector('button#restartButton').addEventListener('click', (e) => {
+        offset = 0
+        loadAndPageUo()
+    })
+
+    document.querySelector('button#nextButton').addEventListener('click', (e) => {
+        offset += limit
+        if (offset > maxPokemons - limit) offset = 0
+        loadAndPageUo()
+    })
+
+    document.querySelector('button#backButton').addEventListener('click', (e) => {
+        offset -= limit
+        if (offset < 0) offset = maxPokemons - limit
+        loadAndPageUo()
+    })
+
+    loadPokemonsItens()
+
+})();
